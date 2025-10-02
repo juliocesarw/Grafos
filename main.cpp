@@ -12,7 +12,19 @@ int gerarNumAleatorio(int limite);
 void criarGrafoNaoDirecional( int tamanho, int ** matriz, int porcentagem);
 void controle();
 void imprimirMatriz( int tamanho, int ** matriz);
+void inicializarMatriz(int tamanho, int **matriz);
+void criarGrafoDirecional(int tamanho, int ** matriz, int porcentagem);
 
+void inicializarMatriz(int tamanho, int **matriz){
+    for(int i = 0; i < tamanho; i++){
+        matriz[i] = (int *)malloc(tamanho * sizeof(int));
+        for (int j = 0; j < tamanho; j++)
+        {
+            matriz[i][j] = 0;
+        }
+        
+    }
+}
 
 int escolhaInicial(){
     system("cls");
@@ -41,12 +53,31 @@ void criarGrafoNaoDirecional(int tamanho, int ** matriz, int porcentagem){
     int c = gerarNumAleatorio(tamanho);
     for (int i = 0; i < porcentagem; i++)
     {
-        if(matriz[l][c] = (int)1){
+        if(matriz[l][c] == 1){
             i--;
         }
         else{
             matriz[l][c] = 1;
             matriz[c][l] = 1;
+        }
+        l = gerarNumAleatorio(tamanho);
+        c = gerarNumAleatorio(tamanho);
+    }
+    
+    
+}
+
+void criarGrafoDirecional(int tamanho, int ** matriz, int porcentagem){
+
+    int l = gerarNumAleatorio(tamanho);
+    int c = gerarNumAleatorio(tamanho);
+    for (int i = 0; i < porcentagem; i++)
+    {
+        if(matriz[l][c] == 1){
+            i--;
+        }
+        else{
+            matriz[l][c] = 1;
         }
         l = gerarNumAleatorio(tamanho);
         c = gerarNumAleatorio(tamanho);
@@ -69,10 +100,12 @@ void controle(){
     switch (op)
     {
         case 1:{ // função para grafos direcionados
-            int matriz[tamanho][tamanho];
+            int **matriz;
+            matriz = (int **)malloc(tamanho * sizeof(int *));
+            inicializarMatriz(tamanho, matriz);
             porcentagem = ((tamanho * (tamanho - 1) / 2) * porcentagem) / 100 ;
             criarGrafoNaoDirecional(tamanho, matriz, porcentagem);
-        
+            imprimirMatriz(tamanho, matriz);
         }
         break;
         case 2:
@@ -93,7 +126,7 @@ void imprimirMatriz(int tamanho, int **matriz){
     {
         for (int j = 0; j < tamanho; j++)
         {
-            cout << matriz[i][j];
+            cout << matriz[i][j] << "  ";
         }
         cout << endl;
     }
@@ -101,6 +134,6 @@ void imprimirMatriz(int tamanho, int **matriz){
 
 int main(){
     srand(time(NULL));
-    // controle();
+    controle();
     return 0;
 }
