@@ -3,9 +3,10 @@
 using namespace std;
 #include <cstdlib>
 #include <ctype.h>
-#include <cstring>
+#include <string>
 #include <ctime>
 #include <fstream>
+#include <sstream>
 
 //asinatura das funçoes
 int escolhaInicial();
@@ -160,7 +161,7 @@ void gerarDotNaoDirecional(int **matriz, int tamanho){
         }
     }
     
-    arquivo << "}" << endl;
+    arquivo << "}";
     arquivo.close();
     
     system("dot -Tpng ../grafos/grafo-nao-direcional.dot -o ../grafos/grafo-nao-direcional.png");
@@ -187,16 +188,42 @@ void gerarDotDirecional(int **matriz, int tamanho){
         }
     }
     
-    arq << "}" << endl;
+    arq << "}";
     arq.close();
 
     system("dot -Tpng ../grafos/grafo-direcional.dot -o ../grafos/grafo-direcional.png");
 
 }
 
+// void classificacaoGrafo(){
+
+//     ifstream arq("../grafos/grafo.dot")
+
+// }
+
 int main(){
     srand(time(NULL));
-    controle();
+    // controle();
+
+    ifstream arq("../grafos/grafo.dot");
+    
+    string linha;
+    string tpArq;
+
+    getline(arq, linha);
+
+    istringstream iss(linha);
+
+    iss >> tpArq;
+
+
+    cout << tpArq << endl;
+
+    arq.close(); 
+    
+
+
+
     // system("dot -Tpng ../grafos.dot -o ../grafo.png");
     return 0;
 }
