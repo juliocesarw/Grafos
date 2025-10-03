@@ -5,6 +5,7 @@ using namespace std;
 #include <ctype.h>
 #include <cstring>
 #include <ctime>
+#include <fstream>
 
 //asinatura das funçoes
 int escolhaInicial();
@@ -14,6 +15,8 @@ void controle();
 void imprimirMatriz( int tamanho, int ** matriz);
 void inicializarMatriz(int tamanho, int **matriz);
 void criarGrafoDirecional(int tamanho, int ** matriz, int porcentagem);
+void gerarDotNaoDirecional(int **matriz, int tamanho);
+void gerarDotDirecional(int **matriz, int tamanho);
 
 void inicializarMatriz(int tamanho, int **matriz){
     for(int i = 0; i < tamanho; i++){
@@ -28,8 +31,8 @@ void inicializarMatriz(int tamanho, int **matriz){
 
 int escolhaInicial(){
     system("cls");
-    cout << "\n\n\t[1] - Criar um grafo direcionado" << endl;
-    cout << "\t[2] - Criar um grafo nao direcionado" << endl;
+    cout << "\n\n\t[1] - Criar um grafo nao direcionado" << endl;
+    cout << "\t[2] - Criar um grafo direcionado" << endl;
     cout << "\t[3] - Importar um arquivo .dot" << endl;
     cout << "\tEscolha: " ;
     int op;
@@ -53,7 +56,7 @@ void criarGrafoNaoDirecional(int tamanho, int ** matriz, int porcentagem){
     int c = gerarNumAleatorio(tamanho);
     for (int i = 0; i < porcentagem; i++)
     {
-        if(matriz[l][c] == 1){
+        if(matriz[l][c] == 1 || l == c){
             i--;
         }
         else{
@@ -73,7 +76,7 @@ void criarGrafoDirecional(int tamanho, int ** matriz, int porcentagem){
     int c = gerarNumAleatorio(tamanho);
     for (int i = 0; i < porcentagem; i++)
     {
-        if(matriz[l][c] == 1){
+        if(matriz[l][c] == 1 || l == c){
             i--;
         }
         else{
@@ -82,8 +85,6 @@ void criarGrafoDirecional(int tamanho, int ** matriz, int porcentagem){
         l = gerarNumAleatorio(tamanho);
         c = gerarNumAleatorio(tamanho);
     }
-    
-    
 }
 
 void controle(){
@@ -99,18 +100,25 @@ void controle(){
     }
     switch (op)
     {
-        case 1:{ // função para grafos direcionados
+        case 1:{ // função para grafos nao direcionados
             int **matriz;
             matriz = (int **)malloc(tamanho * sizeof(int *));
             inicializarMatriz(tamanho, matriz);
             porcentagem = ((tamanho * (tamanho - 1) / 2) * porcentagem) / 100 ;
             criarGrafoNaoDirecional(tamanho, matriz, porcentagem);
             imprimirMatriz(tamanho, matriz);
+            gerarDotNaoDirecional(matriz, tamanho);
         }
         break;
-        case 2:
-            porcentagem = tamanho * tamanho - 1;
-        // função para grafos nao direcionados
+        case 2:{ // função para grafos direcionados
+            int **matriz;
+            matriz = (int **)malloc(tamanho * sizeof(int *));
+            inicializarMatriz(tamanho, matriz);
+            porcentagem = ((tamanho * (tamanho - 1)) * porcentagem) / 100 ;
+            imprimirMatriz(tamanho, matriz);
+            criarGrafoDirecional(tamanho, matriz, porcentagem);
+            gerarDotDirecional(matriz, tamanho);
+        }
         break;
         case 3:
             // função para importar .dot
@@ -130,6 +138,60 @@ void imprimirMatriz(int tamanho, int **matriz){
         }
         cout << endl;
     }
+}
+
+void gerarDotNaoDirecional(int **matriz, int tamanho){
+
+    ofstream arquivo("../grafos/grafo.dot");
+    if(!arquivo.is_open()){
+        cout << "arquivo nao aberto" << endl;
+    }
+    else{
+        arquivo << "graph {" << endl;
+        for ( int i = 0; i < tamanho - 1; i++)
+        {
+            for (int j = i + 1; j < tamanho; j++)
+            {
+                if(matriz[i][j] == 1){
+                    arquivo << i << "--" << j << endl;
+                }
+            }
+            
+        }
+    }
+    
+    arquivo << "}" << endl;
+    arquivo.close();
+    
+    // system("dot -Tpng ../grafo-nao-direcional.dot -o grafo.png");
+    
+}
+
+void gerarDotDirecional(int **matriz, int tamanho){
+    
+    ofstream arq("../grafo.dot");
+    if(!arq.is_open()){
+        cout << "nao abriu" << endl;
+    }
+    else{
+        arq << "digraph {" << endl;
+        for ( int i = 0; i < tamanho; i++)
+        {
+            for (int j = 0; j < tamanho; j++)
+            {
+                if(matriz[i][j] == 1){
+                    arq << i << "->" << j << endl;
+                }
+            }
+            
+        }
+    }
+    
+    arq << "}" << endl;
+    arq.close();
+
+    // system("dot -Tpng grafo-direcional.dot -o grafo.png");
+
 }
 
 int main(){
