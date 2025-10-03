@@ -142,7 +142,7 @@ void imprimirMatriz(int tamanho, int **matriz){
 
 void gerarDotNaoDirecional(int **matriz, int tamanho){
 
-    ofstream arquivo("../grafo-nao-direcional.dot");
+    ofstream arquivo("../grafos/grafo-nao-direcional.dot");
     if(!arquivo.is_open()){
         cout << "arquivo nao aberto" << endl;
     }
@@ -163,13 +163,13 @@ void gerarDotNaoDirecional(int **matriz, int tamanho){
     arquivo << "}" << endl;
     arquivo.close();
     
-    system("dot -Tpng ../grafo-nao-direcional.dot -o ../grafo-nao-direcional.png");
+    system("dot -Tpng ../grafos/grafo-nao-direcional.dot -o ../grafos/grafo-nao-direcional.png");
     
 }
 
 void gerarDotDirecional(int **matriz, int tamanho){
     
-    ofstream arq("../grafo-direcional.dot");
+    ofstream arq("../grafos/grafo-direcional.dot");
     if(!arq.is_open()){
         cout << "nao abriu" << endl;
     }
@@ -190,7 +190,7 @@ void gerarDotDirecional(int **matriz, int tamanho){
     arq << "}" << endl;
     arq.close();
 
-    system("dot -Tpng ../grafo-direcional.dot -o ../grafo-direcional.png");
+    system("dot -Tpng ../grafos/grafo-direcional.dot -o ../grafos/grafo-direcional.png");
 
 }
 
