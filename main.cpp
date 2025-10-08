@@ -18,6 +18,8 @@ void inicializarMatriz(int tamanho, int **matriz);
 void criarGrafoDirecional(int tamanho, int ** matriz, int porcentagem);
 void gerarDotNaoDirecional(int **matriz, int tamanho);
 void gerarDotDirecional(int **matriz, int tamanho);
+void funcaoParaGerarGrafoDoArquivo(int ** matriz, int linha, int coluna);
+void classificacaoGrafo();
 
 void inicializarMatriz(int tamanho, int **matriz){
     for(int i = 0; i < tamanho; i++){
@@ -122,6 +124,7 @@ void controle(){
         }
         break;
         case 3:
+            classificacaoGrafo();
             // função para importar .dot
         break;
         default:
@@ -149,12 +152,15 @@ void gerarDotNaoDirecional(int **matriz, int tamanho){
     }
     else{
         arquivo << "graph {" << endl;
+        for(int n = 0; n < tamanho; n++){
+            arquivo << n << ";" << endl;
+        }
         for ( int i = 0; i < tamanho - 1; i++)
         {
             for (int j = i + 1; j < tamanho; j++)
             {
                 if(matriz[i][j] == 1){
-                    arquivo << i << "--" << j << endl;
+                    arquivo << i << " -- " << j << endl;
                 }
             }
             
@@ -176,12 +182,15 @@ void gerarDotDirecional(int **matriz, int tamanho){
     }
     else{
         arq << "digraph {" << endl;
+        for(int n = 0; n < tamanho; n++){
+            arq << n << ";" << endl;
+        }
         for ( int i = 0; i < tamanho; i++)
         {
             for (int j = 0; j < tamanho; j++)
             {
                 if(matriz[i][j] == 1){
-                    arq << i << "->" << j << endl;
+                    arq << i << " -> " << j << endl;
                 }
             }
             
@@ -195,35 +204,68 @@ void gerarDotDirecional(int **matriz, int tamanho){
 
 }
 
-// void classificacaoGrafo(){
+void funcaoParaGerarGrafoDoArquivo(int ** matriz, int linha, int coluna){
+    
+    matriz[linha][coluna] = 1;
+    matriz[coluna][linha] = 1;
 
-//     ifstream arq("../grafos/grafo.dot")
+}
 
-// }
+void classificacaoGrafo(){
+
+    ifstream arq("../grafos/grafo.dot");
+    if(!arq.is_open()) return;
+    string linha;
+    string tpArq;
+    string teste;
+    string var1;
+    string var2;
+    string var3;
+    int **matriz;
+    
+    getline(arq, linha);
+    
+    istringstream iss(linha);
+    
+    iss >> tpArq;
+    
+    int maior = 0;
+    
+    do
+    {
+        iss.clear();
+        getline(arq, linha);
+        iss.str(linha);
+        iss >> var1;
+        iss >> var2;//esta aqui apenas para dar erro
+        if(stoi(var1) > maior) maior = stoi(var1);
+    } while (iss.fail());
+    
+    matriz = (int **)malloc((maior + 1) * sizeof(int *));
+    inicializarMatriz(maior + 1, matriz);
+    iss.str(linha); //resetando a linha
+
+    do
+    {
+        iss >> var1;
+        iss >> var2;
+        iss >> var3;
+        if(!iss.fail()){
+            funcaoParaGerarGrafoDoArquivo(matriz, stoi(var1), stoi(var3));
+            getline(arq, linha);
+            iss.clear();
+            iss.str(linha);
+        }
+    } while (!iss.fail());
+
+    gerarDotNaoDirecional(matriz, maior + 1);
+    
+    arq.close(); 
+
+}
 
 int main(){
     srand(time(NULL));
-    // controle();
-
-    ifstream arq("../grafos/grafo.dot");
-    
-    string linha;
-    string tpArq;
-
-    getline(arq, linha);
-
-    istringstream iss(linha);
-
-    iss >> tpArq;
-
-
-    cout << tpArq << endl;
-
-    arq.close(); 
-    
-
-
-
-    // system("dot -Tpng ../grafos.dot -o ../grafo.png");
+    controle();
     return 0;
 }
