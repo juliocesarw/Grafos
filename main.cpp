@@ -18,7 +18,8 @@ void inicializarMatriz(int tamanho, int **matriz);
 void criarGrafoDirecional(int tamanho, int ** matriz, int porcentagem);
 void gerarDotNaoDirecional(int **matriz, int tamanho);
 void gerarDotDirecional(int **matriz, int tamanho);
-void funcaoParaGerarGrafoDoArquivo(int ** matriz, int linha, int coluna);
+void funcaoParaGerarGrafoNaoDirecionalDoArquivo(int ** matriz, int linha, int coluna);
+void funcaoParaGerarGrafoDirecionalDoArquivo(int ** matriz, int linha, int coluna);
 void leitura_de_arquivo_dot_direcional();
 bool classificacao_do_grafo(int ** matriz, int tamanho);
 bool percorreGrafo(int ** matriz, int linha, int tamanho, bool * vetor);
@@ -206,10 +207,16 @@ void gerarDotDirecional(int **matriz, int tamanho){
 
 }
 
-void funcaoParaGerarGrafoDoArquivo(int ** matriz, int linha, int coluna){
+void funcaoParaGerarGrafoNaoDirecionalDoArquivo(int ** matriz, int linha, int coluna){
     
     matriz[linha][coluna] = 1;
     matriz[coluna][linha] = 1;
+
+}
+
+void funcaoParaGerarGrafoDirecionalDoArquivo(int ** matriz, int linha, int coluna){
+    
+    matriz[linha][coluna] = 1;
 
 }
 
@@ -232,7 +239,8 @@ void leitura_de_arquivo_dot_direcional(){
     iss >> tpArq;
     
     int maior = 0;
-    
+
+
     do
     {
         iss.clear();
@@ -246,30 +254,48 @@ void leitura_de_arquivo_dot_direcional(){
     matriz = (int **)malloc((maior + 1) * sizeof(int *));
     inicializarMatriz(maior + 1, matriz);
     iss.str(linha); //resetando a linha
-
-    do
-    {
-        iss >> var1;
-        iss >> var2;
-        iss >> var3;
-        if(!iss.fail()){
-            funcaoParaGerarGrafoDoArquivo(matriz, stoi(var1), stoi(var3));
-            getline(arq, linha);
-            iss.clear();
-            iss.str(linha);
+    
+    if(tpArq == "graph"){
+        do
+        {
+            iss >> var1;
+            iss >> var2;
+            iss >> var3;
+            if(!iss.fail()){
+                funcaoParaGerarGrafoNaoDirecionalDoArquivo(matriz, stoi(var1), stoi(var3));
+                getline(arq, linha);
+                iss.clear();
+                iss.str(linha);
         }
-    } while (!iss.fail());
+        } while (!iss.fail());
 
-    // gerarDotNaoDirecional(matriz, maior + 1);
-
-    if(classificacao_do_grafo(matriz, maior + 1)){
-        cout << "\tgrafo conexo" << endl;
-    }else{
-        cout << "\tgrafo desconexo" << endl;
+        if(classificacao_do_grafo(matriz, maior + 1)){
+            cout << "\tgrafo nao direcional e conexo" << endl;
+        }else{
+            cout << "\tgrafo nao direcional e desconexo" << endl;
+        }
     }
+    else{
+        do
+        {
+            iss >> var1;
+            iss >> var2;
+            iss >> var3;
+            if(!iss.fail()){
+                funcaoParaGerarGrafoDirecionalDoArquivo(matriz, stoi(var1), stoi(var3));
+                getline(arq, linha);
+                iss.clear();
+                iss.str(linha);
+        }
+        } while (!iss.fail());
+    }
+
+    
+    gerarDotDirecional(matriz, maior + 1);
+    
     
     arq.close(); 
-
+    
 }
 
 bool classificacao_do_grafo(int ** matriz, int tamanho){
