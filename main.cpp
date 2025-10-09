@@ -19,7 +19,9 @@ void criarGrafoDirecional(int tamanho, int ** matriz, int porcentagem);
 void gerarDotNaoDirecional(int **matriz, int tamanho);
 void gerarDotDirecional(int **matriz, int tamanho);
 void funcaoParaGerarGrafoDoArquivo(int ** matriz, int linha, int coluna);
-void classificacaoGrafo();
+void leitura_de_arquivo_dot_direcional();
+bool classificacao_do_grafo(int ** matriz, int tamanho);
+bool percorreGrafo(int ** matriz, int linha, int tamanho, bool * vetor);
 
 void inicializarMatriz(int tamanho, int **matriz){
     for(int i = 0; i < tamanho; i++){
@@ -124,7 +126,7 @@ void controle(){
         }
         break;
         case 3:
-            classificacaoGrafo();
+            leitura_de_arquivo_dot_direcional();
             // função para importar .dot
         break;
         default:
@@ -211,7 +213,7 @@ void funcaoParaGerarGrafoDoArquivo(int ** matriz, int linha, int coluna){
 
 }
 
-void classificacaoGrafo(){
+void leitura_de_arquivo_dot_direcional(){
 
     ifstream arq("../grafos/grafo.dot");
     if(!arq.is_open()) return;
@@ -258,9 +260,55 @@ void classificacaoGrafo(){
         }
     } while (!iss.fail());
 
-    gerarDotNaoDirecional(matriz, maior + 1);
+    // gerarDotNaoDirecional(matriz, maior + 1);
+
+    if(classificacao_do_grafo(matriz, maior + 1)){
+        cout << "\tgrafo conexo" << endl;
+    }else{
+        cout << "\tgrafo desconexo" << endl;
+    }
     
     arq.close(); 
+
+}
+
+bool classificacao_do_grafo(int ** matriz, int tamanho){
+
+    bool * vetor = new bool[tamanho]();
+
+    percorreGrafo(matriz, 0, tamanho, vetor);
+
+    for (int i = 0; i < tamanho; i++)
+    {
+        cout << vetor[i] << endl;
+    }
+
+    for (int i = 0; i < tamanho; i++)
+    {
+        if(vetor[i] == 0){
+            return false;
+        }
+    }
+
+    return true;
+
+}
+
+bool percorreGrafo(int ** matriz, int linha, int tamanho, bool * vetor){
+
+    if(vetor[linha] == 1){
+        return true;
+    }
+
+    vetor[linha] = 1;
+
+    for (int coluna = 0; coluna < tamanho; coluna++)
+    {
+        if(matriz[linha][coluna] == 1 && vetor[coluna] == 0){
+            percorreGrafo(matriz, coluna, tamanho, vetor);
+        }
+    }
+    return true;
 
 }
 
