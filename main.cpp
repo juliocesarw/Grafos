@@ -21,7 +21,8 @@ void gerarDotDirecional(int **matriz, int tamanho);
 void funcaoParaGerarGrafoNaoDirecionalDoArquivo(int ** matriz, int linha, int coluna);
 void funcaoParaGerarGrafoDirecionalDoArquivo(int ** matriz, int linha, int coluna);
 void leitura_de_arquivo_dot_direcional();
-bool classificacao_do_grafo(int ** matriz, int tamanho);
+bool classificacao_do_grafo(int ** matriz, int tamanho, int indice);
+bool classificacao_do_grafo_direcional(int ** matriz, int tamanho);
 bool percorreGrafo(int ** matriz, int linha, int tamanho, bool * vetor);
 
 void inicializarMatriz(int tamanho, int **matriz){
@@ -269,7 +270,7 @@ void leitura_de_arquivo_dot_direcional(){
         }
         } while (!iss.fail());
 
-        if(classificacao_do_grafo(matriz, maior + 1)){
+        if(classificacao_do_grafo(matriz, maior + 1, 0)){
             cout << "\tgrafo nao direcional e conexo" << endl;
         }else{
             cout << "\tgrafo nao direcional e desconexo" << endl;
@@ -288,26 +289,42 @@ void leitura_de_arquivo_dot_direcional(){
                 iss.str(linha);
         }
         } while (!iss.fail());
-    }
-
-    
-    gerarDotDirecional(matriz, maior + 1);
-    
+        if(classificacao_do_grafo_direcional(matriz, maior + 1)){
+            cout << "grafo direcional e conexo" << endl;
+        }
+        else{
+            cout << "grafo direcional e desconexo" << endl;
+        }
+    }    
     
     arq.close(); 
     
 }
 
-bool classificacao_do_grafo(int ** matriz, int tamanho){
+bool classificacao_do_grafo_direcional(int ** matriz, int tamanho){
 
-    bool * vetor = new bool[tamanho]();
-
-    percorreGrafo(matriz, 0, tamanho, vetor);
+    bool condicao = true;
 
     for (int i = 0; i < tamanho; i++)
     {
-        cout << vetor[i] << endl;
+        condicao = classificacao_do_grafo(matriz, tamanho, i);
+        if(!condicao){
+            return false;
+        }
     }
+    return true;
+
+}
+
+bool classificacao_do_grafo(int ** matriz, int tamanho, int indice){
+
+    //funcao usada para classficar grafos nao direcionais
+    // e reaproveitada para grafos direcionais
+
+    bool * vetor = new bool[tamanho]();
+
+    percorreGrafo(matriz, indice, tamanho, vetor);
+
 
     for (int i = 0; i < tamanho; i++)
     {
@@ -341,5 +358,6 @@ bool percorreGrafo(int ** matriz, int linha, int tamanho, bool * vetor){
 int main(){
     srand(time(NULL));
     controle();
+    // system("dot -Tpng ../grafos/grafo.dot -o ../grafos/temqueserdesconexo.png");
     return 0;
 }
