@@ -150,7 +150,7 @@ void imprimirMatriz(int tamanho, int **matriz){
 
 void gerarDotNaoDirecional(int **matriz, int tamanho){
 
-    ofstream arquivo("../grafos/grafo-nao-direcional.dot");
+    ofstream arquivo("../../grafos/grafo-nao-direcional.dot");
     if(!arquivo.is_open()){
         cout << "arquivo nao aberto" << endl;
     }
@@ -174,13 +174,13 @@ void gerarDotNaoDirecional(int **matriz, int tamanho){
     arquivo << "}";
     arquivo.close();
     
-    system("dot -Tpng ../grafos/grafo-nao-direcional.dot -o ../grafos/grafo-nao-direcional.png");
+    system("dot -Tpng ../../grafos/grafo-nao-direcional.dot -o ../../grafos/grafo-nao-direcional.png");
     
 }
 
 void gerarDotDirecional(int **matriz, int tamanho){
     
-    ofstream arq("../grafos/grafo-direcional.dot");
+    ofstream arq("../../grafos/grafo-direcional.dot");
     if(!arq.is_open()){
         cout << "nao abriu" << endl;
     }
@@ -204,7 +204,7 @@ void gerarDotDirecional(int **matriz, int tamanho){
     arq << "}";
     arq.close();
 
-    system("dot -Tpng ../grafos/grafo-direcional.dot -o ../grafos/grafo-direcional.png");
+    system("dot -Tpng ../../grafos/grafo-direcional.dot -o ../../grafos/grafo-direcional.png");
 
 }
 
@@ -223,7 +223,7 @@ void funcaoParaGerarGrafoDirecionalDoArquivo(int ** matriz, int linha, int colun
 
 void leitura_de_arquivo_dot_direcional(){
 
-    ifstream arq("../grafos/grafo.dot");
+    ifstream arq("../../grafos/grafo.dot");
     if(!arq.is_open()) return;
     string linha;
     string tpArq;
@@ -358,6 +358,6 @@ bool percorreGrafo(int ** matriz, int linha, int tamanho, bool * vetor){
 int main(){
     srand(time(NULL));
     controle();
-    // system("dot -Tpng ../grafos/grafo.dot -o ../grafos/temqueserdesconexo.png");
+    // system("dot -Tpng ../../grafos/grafo.dot -o ../../grafos/temqueserdesconexo.png");
     return 0;
 }

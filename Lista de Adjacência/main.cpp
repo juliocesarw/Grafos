@@ -10,23 +10,24 @@ using namespace std;
 
 struct Vertice; 
 
-struct Vizinho {
-    Vertice *vizinho;
-    Vizinho *proximoVizinho;
+struct NoVizinho {
+    Vertice *PonteiroParavizinho;
+    NoVizinho *proximoVizinho;
 };
 
 struct Vertice {
     int id;
-    Vizinho *vizinhos;
-    Vizinho * ultimoVizinho;
+    NoVizinho *listaDevizinhos;
+    NoVizinho * ultimoVizinho;
 };
 
 Vertice *grafo;
+
 void inicializa(int tamanho){
     grafo = new Vertice[tamanho];
     for(int i = 0; i < tamanho; i++){
         grafo[i].id=i;
-        grafo[i].vizinhos = NULL;
+        grafo[i].listaDevizinhos = NULL;
         grafo[i].ultimoVizinho = NULL;
     }
 }
@@ -35,12 +36,10 @@ void inicializa(int tamanho){
 void inicializa(int tamanho);
 int escolhaInicial();
 int gerarNumAleatorio(int limite);
-void criarGrafoNaoDirecional(int tamanho, int porcentagem);
-void criarGrafoDirecional(int tamanho, int **matriz, int porcentagem);
-void inserir(int indice, int indiceVizinho);
-bool buscaSeJaEvizinho(int indice, int indicePesquisa);
 void controle();
-void imprimeVizinhos(int tamanho);
+void registrarVizinhancaGND(Vertice& x, Vertice& y);
+void imprimir(int tamanho);
+bool saoVizinhos(Vertice x, Vertice y);
 
 int escolhaInicial(){
     system("cls");
@@ -63,75 +62,179 @@ int gerarNumAleatorio(int limite){
     
 }
 
-void criarGrafoNaoDirecional(int tamanho, int porcentagem){
+bool saoVizinhos(Vertice x, Vertice y){
 
-    int no1 = gerarNumAleatorio(tamanho); // 8
-    cout << no1 << " - ";
-    int no2 = gerarNumAleatorio(tamanho); // 3
-    cout << no2 << " somos um par" << endl;
-    
-    for (int i = 0; i < porcentagem; i++)
-    {
-        if(no1 == no2 || buscaSeJaEvizinho(no1, no2) == true){
-            cout << "par repetido ou invalido" << endl;
-            i--;
-        }
-        else{
-            inserir(no1, no2);
-        }
-        no1 = gerarNumAleatorio(tamanho);
-        cout << no1 << " - ";
-        no2 = gerarNumAleatorio(tamanho);
-        cout << no2 << " somos um par" << endl;
-    } 
-}
-
-void criarGrafoDirecional(int tamanho, int ** matriz, int porcentagem){
-
-    int l = gerarNumAleatorio(tamanho);
-    int c = gerarNumAleatorio(tamanho);
-    for (int i = 0; i < porcentagem; i++)
-    {
-        if(matriz[l][c] == 1 || l == c){
-            i--;
-        }
-        else{
-            matriz[l][c] = 1;
-        }
-        l = gerarNumAleatorio(tamanho);
-        c = gerarNumAleatorio(tamanho);
-    }
-}
-
-void inserir(int indice, int indiceVizinho){
-
-    Vizinho * novo = new Vizinho;
-    novo->vizinho = &grafo[indiceVizinho];
-    novo->proximoVizinho = NULL;
-    if(grafo[indice].vizinhos == NULL){
-        grafo[indice].vizinhos = novo;
-        grafo[indice].ultimoVizinho = novo;
-    }
-    else{
-        grafo[indice].ultimoVizinho->proximoVizinho = novo;
-        grafo[indice].ultimoVizinho = novo;
-    }
-}
-
-bool buscaSeJaEvizinho(int indice, int indicePesquisa){
-    Vizinho * percorre = grafo[indice].vizinhos;
-    if(percorre == NULL){
+    if(x.listaDevizinhos == NULL){
+        cout << "nao tem vizinhos" << endl;
         return false;
     }
-    while(percorre != NULL){
-        if(percorre->vizinho->id == grafo[indicePesquisa].id){
-            cout << percorre->vizinho << "  & " << &grafo[indicePesquisa] << endl;
-            return true;
-        }else{
-            percorre = percorre->proximoVizinho;
-        } 
+    else{
+        NoVizinho * percorreVizinhanca = x.listaDevizinhos;
+    
+        while(percorreVizinhanca != NULL){
+            if(percorreVizinhanca->PonteiroParavizinho->id == y.id){
+                cout << "vizinhos" << endl;
+                return true;
+            }
+            else{
+                percorreVizinhanca = percorreVizinhanca->proximoVizinho;
+            }
+        }
     }
+    
+    cout << "chegou ao final" << endl;
     return false;
+};
+
+void registrarVizinhancaGND(Vertice& x, Vertice& y){
+
+    NoVizinho * novox = new NoVizinho;
+    novox->PonteiroParavizinho = &y;
+    novox->proximoVizinho = NULL;
+
+    NoVizinho * novoy = new NoVizinho;
+    novoy->PonteiroParavizinho = &x;
+    novoy->proximoVizinho = NULL;
+
+    // para o x
+    if(x.listaDevizinhos == NULL){
+        x.listaDevizinhos = novox;
+        x.ultimoVizinho = novox;
+    }
+    else{
+        x.ultimoVizinho->proximoVizinho = novox;
+        x.ultimoVizinho = novox;
+    }
+
+    // para o y
+    if(y.listaDevizinhos == NULL){
+        y.listaDevizinhos = novoy;
+        y.ultimoVizinho = novoy;
+    }
+    else{
+        y.ultimoVizinho->proximoVizinho = novoy;
+        y.ultimoVizinho = novoy;
+
+    }
+
+}
+
+void registrarVizinhancaGD(Vertice& x, Vertice& y){
+
+    NoVizinho * novox = new NoVizinho;
+    novox->PonteiroParavizinho = &y;
+    novox->proximoVizinho = NULL;
+
+    // para o x
+    if(x.listaDevizinhos == NULL){
+        x.listaDevizinhos = novox;
+        x.ultimoVizinho = novox;
+    }
+    else{
+        x.ultimoVizinho->proximoVizinho = novox;
+        x.ultimoVizinho = novox;
+    }
+
+}
+
+void criarGrafoNaoDirecional(int tamanho, int porcentagem){
+
+    int n1, n2;
+
+    for (int i = 0; i < porcentagem; i++)
+    {
+        n1 = gerarNumAleatorio(tamanho);
+        n2 = gerarNumAleatorio(tamanho);
+        
+        if(n1 == n2){
+            i--;
+        }
+        else if(saoVizinhos(grafo[n1],grafo[n2])){
+            i--;
+        }
+        else{
+            registrarVizinhancaGND(grafo[n1],grafo[n2]);
+        }
+    }
+    
+}
+
+void criarGrafoDirecional(int tamanho, int porcentagem){
+
+    int n1, n2;
+
+    for (int i = 0; i < porcentagem; i++)
+    {
+        n1 = gerarNumAleatorio(tamanho);
+        n2 = gerarNumAleatorio(tamanho);
+        
+        if(n1 == n2){
+            i--;
+        }
+        else{
+            registrarVizinhancaGD(grafo[n1],grafo[n2]);
+        }
+    }
+    
+}
+
+void gerarDotGND(int tamanho){
+    ofstream arq("../../grafos/grafoNaoDirecionado.dot");
+    if(!arq.is_open()){
+        cout << "nao aberto" << endl;
+    }
+    else{
+        arq << "Graph {" << endl;
+        for (int i = 0; i < tamanho; i++)
+        {
+            arq << i << ";" << endl;
+        }
+        for (int j = 0; j < tamanho; j++)
+        {
+            NoVizinho * percorre = grafo[j].listaDevizinhos;
+            while (percorre != NULL)
+            {
+                if(percorre->PonteiroParavizinho->id < j){
+                    percorre = percorre->proximoVizinho;
+                }
+                else{
+                    arq << j << " -- " << percorre->PonteiroParavizinho->id << endl;
+                    percorre = percorre->proximoVizinho;
+                }
+            }
+            
+        }
+        arq << "}";
+    }
+
+    arq.close();
+}
+
+void gerarDotGD(int tamanho){
+    ofstream arq("../../grafos/grafoDirecionado.dot");
+    if(!arq.is_open()){
+        cout << "nao aberto" << endl;
+    }
+    else{
+        arq << "Digraph {" << endl;
+        for (int i = 0; i < tamanho; i++)
+        {
+            arq << i << ";" << endl;
+        }
+        for (int j = 0; j < tamanho; j++)
+        {
+            NoVizinho * percorre = grafo[j].listaDevizinhos;
+            while (percorre != NULL)
+            {
+                arq << j << " -> " << percorre->PonteiroParavizinho->id << endl;
+                percorre = percorre->proximoVizinho;
+            }
+            
+        }
+        arq << "}";
+    }
+
+    arq.close();
 }
 
 void controle(){
@@ -142,6 +245,7 @@ void controle(){
         system("cls");
         cout << "\tInforme o tamanho do grafo: ";
         cin >> tamanho;
+        inicializa(tamanho);
         cout << "\tInforme a porcentagem do grafo: ";
         cin >> porcentagem;
     }
@@ -150,39 +254,44 @@ void controle(){
         case 1:{ // função para grafos nao direcionados
             porcentagem = ((tamanho * (tamanho - 1) / 2) * porcentagem) / 100 ;
             criarGrafoNaoDirecional(tamanho, porcentagem);
-            // imprimeVizinhos(tamanho);
+            imprimir(tamanho);
+            gerarDotGND(tamanho);
+            break;
         }
+        case 2:
+            porcentagem = ((tamanho * (tamanho - 1)) * porcentagem) / 100 ;
+            criarGrafoDirecional(tamanho, porcentagem);
+            imprimir(tamanho);
+            gerarDotGD(tamanho);
+            break;
         default:
         cout << "\topcao invalida!!" << endl;
         break;
     }
 }
 
-void imprimeVizinhos(int tamanho){
-    Vizinho *v;
+void imprimir(int tamanho){
+
     for (int i = 0; i < tamanho; i++)
     {
-        cout << i << " : ";
-        v = grafo[i].vizinhos;
-        while (v != NULL){
-            if(v->proximoVizinho != NULL){
-                cout << v->vizinho->id << " - ";
-                v = v->proximoVizinho;
-            }
-            else{
-                cout << v->vizinho->id;
-            }
-        } 
-        cout << endl;        
+        NoVizinho* atual = grafo[i].listaDevizinhos;
+        cout << "\n";
+        cout << i << ": - ";
+        while (atual != NULL) {
+        cout << atual->PonteiroParavizinho->id << " ";
+        atual = atual->proximoVizinho;
+        }
     }
     
 }
 
 main(){
     srand(time(NULL));
-    inicializa(5);
+    
     controle();
-    // cout << "teste";
-    // system("dot -Tpng ../grafos/grafo.dot -o ../grafos/temqueserdesconexo.png");
+
+    // cout << "rodou";
+    system("dot -Tpng ../../grafos/grafoDirecionado.dot -o ../../grafos/grafoDirecionado.png");
+
     return 0;
 }
