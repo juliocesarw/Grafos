@@ -62,11 +62,11 @@ void inicializaFila(){
 };
 
 //assinaturas
-void inicializa(int tamanho);
 int escolhaInicial();
 int gerarNumAleatorio(int limite);
 void controle();
 void registrarVizinhancaGND(Vertice& x, Vertice& y);
+void registrarVizinhancaGrafoMinimo(Vertice& x, Vertice& y, int peso);
 bool saoVizinhos(Vertice x, Vertice y);
 bool classificacaoDoGradoND(int tamanho);
 bool percorreGrafo(bool * vetor, int indice);
@@ -80,6 +80,7 @@ void criarArvoreMinima(int tamanho);
 bool procurarCiclo(int verticeA, int verticeB, int tamanho);
 void imprimir(int tamanho);
 void imprimirGrafoMinimo(int tamanho);
+void leitura_de_arquivo_dot_direcional();
 
 int escolhaInicial(){
     system("cls");
@@ -159,6 +160,86 @@ void registrarVizinhancaGND(Vertice& x, Vertice& y){
 
 }
 
+void registrarVizinhancaGrafoMinimo(Vertice& x, Vertice& y, int peso){
+
+    NoVizinho * novox = new NoVizinho;
+    novox->PonteiroParavizinho = &y;
+    novox->proximoVizinho = NULL;
+    novox->peso = peso;
+    
+    NoVizinho * novoy = new NoVizinho;
+    novoy->PonteiroParavizinho = &x;
+    novoy->proximoVizinho = NULL;
+    novoy->peso = peso;
+
+    // para o x
+    if(x.listaDevizinhos == NULL){
+        x.listaDevizinhos = novox;
+        x.ultimoVizinho = novox;
+    }
+    else{
+        x.ultimoVizinho->proximoVizinho = novox;
+        x.ultimoVizinho = novox;
+    }
+
+    // para o y
+    if(y.listaDevizinhos == NULL){
+        y.listaDevizinhos = novoy;
+        y.ultimoVizinho = novoy;
+    }
+    else{
+        y.ultimoVizinho->proximoVizinho = novoy;
+        y.ultimoVizinho = novoy;
+
+    }
+
+}
+
+void inserirNaLista(Arestas * novo){
+    
+    if(fila.inicio == NULL){
+        fila.inicio = novo;
+        fila.fim = novo;
+    }
+    else{
+        Arestas * percorre = fila.inicio;
+        while (percorre != NULL)
+        {
+            if(novo->peso < percorre->peso){
+
+                if(percorre->ante == NULL){
+                    novo->prox = fila.inicio;
+                    fila.inicio->ante = novo;
+                    fila.inicio = novo;
+                    return;
+                }else{
+                    percorre->ante->prox = novo;
+                    novo->ante = percorre->ante;
+                    novo->prox = percorre;
+                    percorre->ante = novo;
+                    return;
+                }
+            }
+            else{
+                percorre = percorre->prox;
+            }
+        }
+        fila.fim->prox = novo;
+        novo->ante = fila.fim;
+        fila.fim = novo;
+    }
+}
+
+Arestas * criarAresta(Vertice * no, Vertice * vizinho, int peso){
+    Arestas * novo = new Arestas;
+    novo->a = no;
+    novo->b = vizinho;
+    novo->peso = peso;
+    novo->ante = NULL;
+    novo->prox = NULL;
+    return novo;
+}
+
 void criarGrafoNaoDirecional(int tamanho, int porcentagem){
 
     int n1, n2;
@@ -181,6 +262,26 @@ void criarGrafoNaoDirecional(int tamanho, int porcentagem){
     
 }
 
+void criarArvoreMinima(int tamanho){
+
+    int a, b;
+    Arestas * percorre = fila.inicio;
+    while (percorre != NULL)
+    {
+        a = percorre->a->id;
+        b = percorre->b->id;
+        if(!procurarCiclo(a,b, tamanho)){
+            registrarVizinhancaGrafoMinimo(grafoMinimo[a], grafoMinimo[b], percorre->peso);
+            // imprimirGrafoMinimo(tamanho);
+            // system("pause");
+        }
+        percorre = percorre->prox;
+    }
+    gerarDotGrafoMinimo(tamanho, "../../grafos/ArvoreMinima.dot");
+    system("dot -Tpng ../../grafos/ArvoreMinima.dot -o ../../grafos/ArvoreMinima.png");
+
+}
+
 void gerarDotGND(int tamanho, string caminho){
     ofstream arq(caminho);
     if(!arq.is_open()){
@@ -201,7 +302,7 @@ void gerarDotGND(int tamanho, string caminho){
                     percorre = percorre->proximoVizinho;
                 }
                 else{
-                    arq << j << " -- " << percorre->PonteiroParavizinho->id << " " << "[label=" << percorre->peso << ",weight=" << percorre->peso << "];" << endl;
+                    arq << j << " -- " << percorre->PonteiroParavizinho->id << " " << "[label= " << percorre->peso << ", weight= " << percorre->peso << "];" << endl;
                     percorre = percorre->proximoVizinho;
                 }
             }
@@ -233,7 +334,7 @@ void gerarDotGrafoMinimo(int tamanho, string caminho){
                     percorre = percorre->proximoVizinho;
                 }
                 else{
-                    arq << j << " -- " << percorre->PonteiroParavizinho->id << " " << "[label=" << percorre->peso << ",weight=" << percorre->peso << "];" << endl;
+                    arq << j << " -- " << percorre->PonteiroParavizinho->id << " " << "[label= " << percorre->peso << ", weight= " << percorre->peso << "];" << endl;
                     percorre = percorre->proximoVizinho;
                 }
             }
@@ -246,50 +347,45 @@ void gerarDotGrafoMinimo(int tamanho, string caminho){
 }
 
 void controle(){
-    int tamanho = 0; //quantidade de vertices (nos)
-    int porcentagem = 0; //quantidade de arestas (ligaçoes)
-    system("cls");
 
-    cout << "\tInforme o tamanho do grafo: ";
-    cin >> tamanho;
-
-    inicializa(tamanho);
-
-    cout << "\tInforme a porcentagem do grafo: ";
-    cin >> porcentagem;
-
-    porcentagem = ((tamanho * (tamanho - 1) / 2) * porcentagem) / 100 ;
-    criarGrafoNaoDirecional(tamanho, porcentagem);
-    imprimir(tamanho);
-    gerarDotGND(tamanho, "../../grafos/grafoNaoDirecionado.dot");
-    system("dot -Tpng ../../grafos/grafoNaoDirecionado.dot -o ../../grafos/grafoNaoDirecionado.png");
+    int tamanho, porcentagem;
+    int op = escolhaInicial();
+    if(op == 1){
+        tamanho = 0; //quantidade de vertices (nos)
+        porcentagem = 0; //quantidade de arestas (ligaçoes)
+        system("cls");
     
-    inicializaFila();
-    fazerLista(tamanho);
-    imprimirLista();
-
-    // inicializaGrafoMinimo(tamanho);
-    // criarArvoreMinima(tamanho);
-
-    // imprimirGrafoMinimo(tamanho);
-
-}
-
-void criarArvoreMinima(int tamanho){
-
-    int a, b;
-    Arestas * percorre = fila.inicio;
-    while (percorre != NULL)
-    {
-        a = percorre->a->id;
-        b = percorre->b->id;
-        if(!procurarCiclo(a,b, tamanho)){
-            registrarVizinhancaGND(grafoMinimo[a], grafoMinimo[b]);
-        }
-        percorre = percorre->prox;
+        cout << "\tInforme o tamanho do grafo: ";
+        cin >> tamanho;
+    
+        inicializa(tamanho);
+    
+        cout << "\tInforme a porcentagem do grafo: ";
+        cin >> porcentagem;
     }
-    gerarDotGrafoMinimo(tamanho, "../../grafos/ArvoreMinima.dot");
-    system("dot -Tpng ../../grafos/ArvoreMinima.dot -o ../../grafos/ArvoreMinima.png");
+    switch (op)
+    {
+    case 1:
+        porcentagem = ((tamanho * (tamanho - 1) / 2) * porcentagem) / 100 ;
+        criarGrafoNaoDirecional(tamanho, porcentagem);
+        // imprimir(tamanho);
+        gerarDotGND(tamanho, "../../grafos/grafoNaoDirecionado.dot");
+        system("dot -Tpng ../../grafos/grafoNaoDirecionado.dot -o ../../grafos/grafoNaoDirecionado.png");
+        
+        inicializaFila();
+        fazerLista(tamanho);
+        imprimirLista();
+
+        inicializaGrafoMinimo(tamanho);
+        criarArvoreMinima(tamanho);
+        break;
+    case 2:
+        leitura_de_arquivo_dot_direcional();
+        break;
+    default:
+        cout << "opcao invalida" << endl;
+        break;
+    }
 
 }
 
@@ -301,38 +397,6 @@ bool procurarCiclo(int verticeA, int verticeB, int tamanho){
     delete[] vetor; 
     return ciclo;
 
-}
-
-void imprimir(int tamanho){
-
-    for (int i = 0; i < tamanho; i++)
-    {
-        NoVizinho* atual = grafo[i].listaDevizinhos;
-        cout << "\n";
-        cout << i << ": - ";
-        while (atual != NULL) {
-        cout << atual->PonteiroParavizinho->id << "(" << atual->peso << ")" << " ";
-        atual = atual->proximoVizinho;
-        }
-    }
-cout << "\n" << endl;
-    
-}
-
-void imprimirGrafoMinimo(int tamanho){
-
-    for (int i = 0; i < tamanho; i++)
-    {
-        NoVizinho* atual = grafoMinimo[i].listaDevizinhos;
-        cout << "\n";
-        cout << i << ": - ";
-        while (atual != NULL) {
-        cout << atual->PonteiroParavizinho->id << "(" << atual->peso << ")" << " ";
-        atual = atual->proximoVizinho;
-        }
-    }
-cout << "\n" << endl;
-    
 }
 
 bool classificacaoDoGradoND(int tamanho){
@@ -381,57 +445,12 @@ bool percorreGrafoMinimo(bool * vetor, int indice){
 
     while (percorre != NULL)
     {
-        percorreGrafo(vetor, percorre->PonteiroParavizinho->id);
+        percorreGrafoMinimo(vetor, percorre->PonteiroParavizinho->id);
         percorre = percorre->proximoVizinho;
     }
     
     return true;
 
-}
-
-Arestas * criarAresta(Vertice * no, Vertice * vizinho, int peso){
-    Arestas * novo = new Arestas;
-    novo->a = no;
-    novo->b = vizinho;
-    novo->peso = peso;
-    novo->ante = NULL;
-    novo->prox = NULL;
-    return novo;
-}
-
-void inserirNaLista(Arestas * novo){
-    
-    if(fila.inicio == NULL){
-        fila.inicio = novo;
-        fila.fim = novo;
-    }
-    else{
-        Arestas * percorre = fila.inicio;
-        while (percorre != NULL)
-        {
-            if(novo->peso < percorre->peso){
-
-                if(percorre->ante == NULL){
-                    novo->prox = fila.inicio;
-                    fila.inicio->ante = novo;
-                    fila.inicio = novo;
-                    return;
-                }else{
-                    percorre->ante->prox = novo;
-                    novo->ante = percorre->ante;
-                    novo->prox = percorre;
-                    percorre->ante = novo;
-                    return;
-                }
-            }
-            else{
-                percorre = percorre->prox;
-            }
-        }
-        fila.fim->prox = novo;
-        novo->ante = fila.fim;
-        fila.fim = novo;
-    }
 }
 
 void fazerLista(int tamanho){
@@ -459,6 +478,115 @@ void imprimirLista(){
         cout << percorre->a->id << " - " << percorre->b->id << " = " << percorre->peso << endl;
         percorre = percorre->prox;
     }
+}
+
+void imprimir(int tamanho){
+
+    for (int i = 0; i < tamanho; i++)
+    {
+        NoVizinho* atual = grafo[i].listaDevizinhos;
+        cout << "\n";
+        cout << i << ": - ";
+        while (atual != NULL) {
+        cout << atual->PonteiroParavizinho->id << "(" << atual->peso << ")" << " ";
+        atual = atual->proximoVizinho;
+        }
+    }
+cout << "\n" << endl;
+    
+}
+
+void imprimirGrafoMinimo(int tamanho){
+
+    for (int i = 0; i < tamanho; i++)
+    {
+        NoVizinho* atual = grafoMinimo[i].listaDevizinhos;
+        cout << "\n";
+        cout << i << ": - ";
+        while (atual != NULL) {
+        cout << atual->PonteiroParavizinho->id << "(" << atual->peso << ")" << " ";
+        atual = atual->proximoVizinho;
+        }
+    }
+cout << "\n" << endl;
+    
+}
+
+void leitura_de_arquivo_dot_direcional(){
+
+    ifstream arq("../../grafos/grafo.dot");
+    if(!arq.is_open()){
+        cout << "erro ao abrir arquivo!" << endl;
+        return;
+    } 
+    string linha;
+    string tpArq;
+    string var1;
+    string var2;
+    string var3;
+    string ignore;
+    string peso;
+    
+    
+    getline(arq, linha);
+    
+    istringstream iss(linha);
+    
+    iss >> tpArq;
+    
+    int maior = 0;
+
+
+    do
+    {
+        iss.clear();
+        getline(arq, linha);
+        iss.str(linha);
+        iss >> var1;
+        iss >> var2;//esta aqui apenas para dar erro
+        if(stoi(var1) > maior) maior = stoi(var1);
+    } while (iss.fail());
+    
+    int tamanho = maior + 1;
+
+    inicializa(tamanho);
+    iss.str(linha); //resetando a linha
+    
+    if(tpArq == "Graph"){
+        do
+        {
+            iss >> var1;
+            iss >> var2;
+            iss >> var3;
+            iss >> ignore;
+            iss >> peso;
+            if(!iss.fail()){
+                registrarVizinhancaGrafoMinimo(grafo[stoi(var1)], grafo[stoi(var3)], stoi(peso));
+                getline(arq, linha);
+                iss.clear();
+                iss.str(linha);
+            }
+        } while (!iss.fail());
+        
+        if(classificacaoDoGradoND(tamanho)){
+            cout << "\tgrafo nao direcional e conexo" << endl;
+        }else{
+            cout << "\tgrafo nao direcional e desconexo" << endl;
+        }
+    } 
+    else{
+        cout << "nao foi possivel ler o arquivo" << endl;
+    }  
+    
+    arq.close(); 
+
+    system("dot -Tpng ../../grafos/grafo.dot -o ../../grafos/grafo.png");
+    
+    inicializaFila();
+    fazerLista(tamanho);
+    inicializaGrafoMinimo(tamanho);
+    criarArvoreMinima(tamanho);
+
 }
 
 main(){
