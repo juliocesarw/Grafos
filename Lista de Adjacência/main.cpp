@@ -40,6 +40,10 @@ void controle();
 void registrarVizinhancaGND(Vertice& x, Vertice& y);
 void imprimir(int tamanho);
 bool saoVizinhos(Vertice x, Vertice y);
+bool classificacaoDoGradoND(int tamanho, int indice);
+void leitura_de_arquivo_dot_direcional();
+bool percorreGrafo(bool * vetor, int indice);
+bool classificacaoDoGrafoD(int tamanho);
 
 int escolhaInicial(){
     system("cls");
@@ -65,7 +69,6 @@ int gerarNumAleatorio(int limite){
 bool saoVizinhos(Vertice x, Vertice y){
 
     if(x.listaDevizinhos == NULL){
-        cout << "nao tem vizinhos" << endl;
         return false;
     }
     else{
@@ -73,7 +76,6 @@ bool saoVizinhos(Vertice x, Vertice y){
     
         while(percorreVizinhanca != NULL){
             if(percorreVizinhanca->PonteiroParavizinho->id == y.id){
-                cout << "vizinhos" << endl;
                 return true;
             }
             else{
@@ -171,6 +173,9 @@ void criarGrafoDirecional(int tamanho, int porcentagem){
         if(n1 == n2){
             i--;
         }
+        else if(saoVizinhos(grafo[n1], grafo[n2])){
+            i--;
+        }
         else{
             registrarVizinhancaGD(grafo[n1],grafo[n2]);
         }
@@ -264,6 +269,10 @@ void controle(){
             imprimir(tamanho);
             gerarDotGD(tamanho);
             break;
+
+        case 3:
+            leitura_de_arquivo_dot_direcional();
+            break;
         default:
         cout << "\topcao invalida!!" << endl;
         break;
@@ -285,13 +294,147 @@ void imprimir(int tamanho){
     
 }
 
+void leitura_de_arquivo_dot_direcional(){
+
+    ifstream arq("../../grafos/grafo.dot");
+    if(!arq.is_open()){
+        cout << "erro ao abrir arquivo!" << endl;
+        return;
+    } 
+    string linha;
+    string tpArq;
+    string teste;
+    string var1;
+    string var2;
+    string var3;
+    
+    getline(arq, linha);
+    
+    istringstream iss(linha);
+    
+    iss >> tpArq;
+    
+    int maior = 0;
+
+
+    do
+    {
+        iss.clear();
+        getline(arq, linha);
+        iss.str(linha);
+        iss >> var1;
+        iss >> var2;//esta aqui apenas para dar erro
+        if(stoi(var1) > maior) maior = stoi(var1);
+    } while (iss.fail());
+    
+    int tamanho = maior + 1;
+
+    inicializa(tamanho);
+    iss.str(linha); //resetando a linha
+    
+    if(tpArq == "Graph"){
+        do
+        {
+            iss >> var1;
+            iss >> var2;
+            iss >> var3;
+            if(!iss.fail()){
+                registrarVizinhancaGND(grafo[stoi(var1)], grafo[stoi(var3)]);
+                getline(arq, linha);
+                iss.clear();
+                iss.str(linha);
+            }
+        } while (!iss.fail());
+        
+        if(classificacaoDoGradoND(tamanho, 0)){
+            cout << "\tgrafo nao direcional e conexo" << endl;
+        }else{
+            cout << "\tgrafo nao direcional e desconexo" << endl;
+        }
+    }
+    else if(tpArq == "Digraph"){
+        do
+        {
+            iss >> var1;
+            iss >> var2;
+            iss >> var3;
+            if(!iss.fail()){
+                registrarVizinhancaGD(grafo[stoi(var1)], grafo[stoi(var3)]);
+                getline(arq, linha);
+                iss.clear();
+                iss.str(linha);
+        }
+        } while (!iss.fail());
+        if(classificacaoDoGrafoD(tamanho)){
+            cout << "grafo direcional e conexo" << endl;
+        }
+        else{
+            cout << "grafo direcional e desconexo" << endl;
+        }
+    }  
+    else{
+        cout << "nao e nem grafo nem digrafo" << endl;
+    }  
+    
+    arq.close(); 
+    
+}
+
+bool classificacaoDoGrafoD(int tamanho){
+
+    bool var;
+
+    for (int i = 0; i < tamanho; i++)
+    {
+        var = classificacaoDoGradoND(tamanho, i);
+        if(var == false) return false;
+    }
+    
+    return true;
+
+}
+
+bool classificacaoDoGradoND(int tamanho, int indice){
+
+    bool *vetor = new bool[tamanho]();
+
+    percorreGrafo(vetor, indice);
+
+    for (int i = 0; i < tamanho; i++)
+    {
+        if(vetor[i] == 0) return false; 
+    }
+
+    return true;
+}
+
+bool percorreGrafo(bool * vetor, int indice){
+
+    if(vetor[indice] == 1){
+        return true;
+    }
+
+    vetor[indice] = 1;
+
+    NoVizinho * percorre = grafo[indice].listaDevizinhos;
+
+    while (percorre != NULL)
+    {
+        percorreGrafo(vetor, percorre->PonteiroParavizinho->id);
+        percorre = percorre->proximoVizinho;
+    }
+    
+    return true;
+
+}
+
 main(){
     srand(time(NULL));
     
     controle();
 
-    // cout << "rodou";
-    system("dot -Tpng ../../grafos/grafoDirecionado.dot -o ../../grafos/grafoDirecionado.png");
+    // esta comentado por que eu nao consegui resover o erro de permissao para fazer isso dentro da funcao
+    // system("dot -Tpng ../../grafos/grafoDirecionado.dot -o ../../grafos/grafoDirecionado.png");
 
     return 0;
 }
