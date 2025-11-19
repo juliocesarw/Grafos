@@ -22,16 +22,6 @@ struct Vertice {
     NoVizinho * ultimoVizinho;
 };
 
-struct Arestas
-{
-    Vertice* a;
-    Vertice* b;
-    int peso;
-    Arestas * prox;
-    Arestas * ante;
-};
-
-
 Vertice *grafo;
 Vertice *grafoMinimo;
 
@@ -69,6 +59,7 @@ bool procurarCiclo(int verticeA, int verticeB, int tamanho);
 void imprimir(int tamanho);
 void imprimirGrafoMinimo(int tamanho);
 void leitura_de_arquivo_dot_direcional();
+bool visitouTodos(bool * vetor, int tamanho);
 
 int escolhaInicial(){
     system("cls");
@@ -183,25 +174,6 @@ void registrarVizinhancaGrafoMinimo(Vertice& x, Vertice& y, int peso){
 
 }
 
-int vizinhoMaisProximo(Vertice no, int& peso){
-
-    int idMenor;
-    int menorPeso = 11;
-    NoVizinho * percorre = no.listaDevizinhos;
-
-    while (percorre != NULL){
-        if(percorre->peso < menorPeso && !saoVizinhos(grafoMinimo[no.id], grafoMinimo[percorre->PonteiroParavizinho->id])){
-            idMenor = percorre->PonteiroParavizinho->id;
-            menorPeso = percorre->peso;
-        }
-        percorre = percorre->proximoVizinho;
-    }
-    
-    peso = menorPeso;
-    return idMenor;    
-
-}
-
 void criarGrafoNaoDirecional(int tamanho, int porcentagem){
 
     int n1, n2;
@@ -226,41 +198,53 @@ void criarGrafoNaoDirecional(int tamanho, int porcentagem){
 
 void criarArvoreMinima(int tamanho){
 
-    int peso;
-    int indice;
-    int indiceVizinho;
+    bool * vetorVisitados = new bool[tamanho]();
 
-    //inicia a arvore minima com o indice aleatorio e o menor vertice dele
-    int noInicial = gerarNumAleatorio(tamanho); // 1
-    int novoVizinho = vizinhoMaisProximo(grafo[noInicial], peso); // vizinho mais proximo do grafo[valor aleatorio] no grafo principal
-    registrarVizinhancaGrafoMinimo(grafoMinimo[noInicial], grafoMinimo[novoVizinho], peso);// este novo vizinho ja e o novo vizinho para a arvore geradora 
+    //aqui vai ser registrado os dados para fazer a ligação do 
+    //vertice que tem a menor aresta com a menor aresta e seu peso
+    int posicaoComMenorVizinho = 0; 
+    int indiceMenorVizinho = 0;
+    int peso = 20;
 
-    //comeca a percorrer a arvore procurando a menor aresta
-    // vou receber o retorno do 
-    for (int i = 1; i < tamanho; i++) // vou dar um for da quantidade de arestas na arvore minima
+    int x = gerarNumAleatorio(tamanho);
+    vetorVisitados[x] = true;
+
+    while (!visitouTodos(vetorVisitados, tamanho))
     {
-        indice = buscaMenorAresta(peso, indiceVizinho, tamanho);
-        registrarVizinhancaGND(grafoMinimo[indice], grafoMinimo[indiceVizinho]);
+        for (int i = 0; i < tamanho; i++)
+        {
+            if(vetorVisitados[i] == true){
+                NoVizinho * percorre = grafo[i].listaDevizinhos;
+                while (percorre != NULL)
+                {
+                    if(percorre->peso < peso && !procurarCiclo(grafo[i].id, percorre->PonteiroParavizinho->id, tamanho)){
+                        posicaoComMenorVizinho = i;
+                        indiceMenorVizinho = percorre->PonteiroParavizinho->id;
+                        peso = percorre->peso;
+                    }
+                    percorre = percorre->proximoVizinho;
+                }
+                
+
+            }
+        }
+        registrarVizinhancaGrafoMinimo(grafoMinimo[posicaoComMenorVizinho], grafoMinimo[indiceMenorVizinho], peso);
+        vetorVisitados[indiceMenorVizinho] = true;
+        posicaoComMenorVizinho = 0; 
+        indiceMenorVizinho = 0;
+        peso = 20;
     }
     
-
 }
 
-int buscaMenorAresta(int& peso, int& indiceVizinho, int tamanho){
+bool visitouTodos(bool * vetor, int tamanho){
 
-    int indice, var;
-    for ( int i = 0; i < tamanho; i++)
+    for (int i = 0; i < tamanho; i++)
     {
-        if(grafoMinimo[i].listaDevizinhos != NULL){
-            // preciso saber o indice da menor aresta
-            var = vizinhoMaisProximo(grafo[i], peso);
-            if(var < indiceVizinho){
-                indiceVizinho = var;
-                indice = i;
-            }
-        }   
+        if(vetor[i] == false) return false;
     }
-    return indice;
+    return true;
+
 }
 
 void gerarDotGND(int tamanho, string caminho){
@@ -355,6 +339,9 @@ void controle(){
         
         inicializaGrafoMinimo(tamanho);
         criarArvoreMinima(tamanho);
+        gerarDotGrafoMinimo(tamanho, "../../grafos/grafoMinimo.dot");
+        system("dot -Tpng ../../grafos/grafoMinimo.dot -o ../../grafos/grafoMinimo.png");
+
         break;
     case 2:
         leitura_de_arquivo_dot_direcional();
@@ -526,14 +513,19 @@ void leitura_de_arquivo_dot_direcional(){
     } 
     else{
         cout << "nao foi possivel ler o arquivo" << endl;
+        cout << "programa crashou" << endl;
+        return;
     }  
     
     arq.close(); 
 
     system("dot -Tpng ../../grafos/grafo.dot -o ../../grafos/grafo.png");
+
     
     inicializaGrafoMinimo(tamanho);
     criarArvoreMinima(tamanho);
+    gerarDotGrafoMinimo(tamanho, "../../grafos/grafoMinimo.dot");
+    system("dot -Tpng ../../grafos/grafoMinimo.dot -o ../../grafos/grafoMinimo.png");
 
 }
 

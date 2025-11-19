@@ -277,8 +277,8 @@ void criarArvoreMinima(int tamanho){
         }
         percorre = percorre->prox;
     }
-    gerarDotGrafoMinimo(tamanho, "../../grafos/ArvoreMinima.dot");
-    system("dot -Tpng ../../grafos/ArvoreMinima.dot -o ../../grafos/ArvoreMinima.png");
+    gerarDotGrafoMinimo(tamanho, "../../grafos/ArvoreMinimaKruskal.dot");
+    system("dot -Tpng ../../grafos/ArvoreMinimaKruskal.dot -o ../../grafos/ArvoreMinimaKruskal.png");
 
 }
 
@@ -594,9 +594,7 @@ main(){
     
     controle();
 
-    // cout << "rodou" << endl;
-
-    // system("dot -Tpng ../../grafos/grafoNaoDirecionado.dot -o ../../grafos/grafoNaoDirecionado.png");
+    // usei busca em profundidade
 
     return 0;
 }
