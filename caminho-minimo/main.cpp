@@ -8,42 +8,67 @@ using namespace std;
 #include <fstream>
 #include <sstream>
 
-//asinatura das funçoes
-int escolhaInicial();
-int gerarNumAleatorio(int limite);  
-void criarGrafoNaoDirecional( int tamanho, int ** matriz, int porcentagem);
-void controle();
-void imprimirMatriz( int tamanho, int ** matriz);
-void inicializarMatriz(int tamanho, int **matriz);
-void criarGrafoDirecional(int tamanho, int ** matriz, int porcentagem);
-void gerarDotNaoDirecional(int **matriz, int tamanho);
-void gerarDotDirecional(int **matriz, int tamanho);
-void funcaoParaGerarGrafoNaoDirecionalDoArquivo(int ** matriz, int linha, int coluna);
-void funcaoParaGerarGrafoDirecionalDoArquivo(int ** matriz, int linha, int coluna);
-void leitura_de_arquivo_dot_direcional();
-bool classificacao_do_grafo(int ** matriz, int tamanho, int indice);
-bool classificacao_do_grafo_direcional(int ** matriz, int tamanho);
-bool percorreGrafo(int ** matriz, int linha, int tamanho, bool * vetor);
+struct Vertice; 
 
+struct NoVizinho {
+    Vertice *PonteiroParavizinho;
+    NoVizinho *proximoVizinho;
+    int peso;
+};
 
+struct Vertice {
+    int id;
+    NoVizinho *listaDevizinhos;
+    NoVizinho * ultimoVizinho;
+};
 
+struct No {// no para fazer o caminho minimo
+    int distancia;
+    int predecessor;
+    bool visitado;
+};
 
-void inicializarMatriz(int tamanho, int **matriz){
+Vertice *grafo;
+No * vetor;
+
+void inicializa(int tamanho){
+    grafo = new Vertice[tamanho];
     for(int i = 0; i < tamanho; i++){
-        matriz[i] = (int *)malloc(tamanho * sizeof(int));
-        for (int j = 0; j < tamanho; j++)
-        {
-            matriz[i][j] = 0;
-        }
-        
+        grafo[i].id=i;
+        grafo[i].listaDevizinhos = NULL;
+        grafo[i].ultimoVizinho = NULL;
     }
 }
+
+void inicializaVetor(int tamanho){
+
+    vetor = new No[tamanho];
+    for (int i = 0; i < tamanho; i++)
+    {
+        vetor[i].predecessor = -2;
+        vetor[i].distancia = 200000;
+        vetor[i].visitado = false;
+    }
+
+}
+
+//assinaturas
+void inicializa(int tamanho);
+int escolhaInicial();
+int gerarNumAleatorio(int limite);
+void controle();
+void registrarVizinhancaGND(Vertice& x, Vertice& y);
+bool saoVizinhos(Vertice x, Vertice y);
+bool classificacaoDoGradoND(int tamanho);
+bool percorreGrafo(bool * vetor, int indice);
+void gerarDotGND(int tamanho, string caminho);
+void imprimir(int tamanho);
+void controleCaminhoMinimo(int tamanho, int inicio, int chegada);
 
 int escolhaInicial(){
     system("cls");
     cout << "\n\n\t[1] - Criar um grafo nao direcionado" << endl;
-    cout << "\t[2] - Criar um grafo direcionado" << endl;
-    cout << "\t[3] - Importar um arquivo .dot" << endl;
+    cout << "\t[2] - Importar um arquivo .dot" << endl;
     cout << "\tEscolha: " ;
     int op;
     cin >> op;
@@ -60,307 +85,248 @@ int gerarNumAleatorio(int limite){
     
 }
 
-void criarGrafoNaoDirecional(int tamanho, int ** matriz, int porcentagem){
+bool saoVizinhos(Vertice x, Vertice y){
 
-    int l = gerarNumAleatorio(tamanho);
-    int c = gerarNumAleatorio(tamanho);
+    if(x.listaDevizinhos == NULL){
+        return false;
+    }
+    else{
+        NoVizinho * percorreVizinhanca = x.listaDevizinhos;
+    
+        while(percorreVizinhanca != NULL){
+            if(percorreVizinhanca->PonteiroParavizinho->id == y.id){
+                return true;
+            }
+            else{
+                percorreVizinhanca = percorreVizinhanca->proximoVizinho;
+            }
+        }
+    }
+    
+    return false;
+};
+
+void registrarVizinhancaGND(Vertice& x, Vertice& y){
+
+    int pesoAleatorio = gerarNumAleatorio(10) + 1;
+
+    NoVizinho * novox = new NoVizinho;
+    novox->PonteiroParavizinho = &y;
+    novox->proximoVizinho = NULL;
+    novox->peso = pesoAleatorio;
+    
+    NoVizinho * novoy = new NoVizinho;
+    novoy->PonteiroParavizinho = &x;
+    novoy->proximoVizinho = NULL;
+    novoy->peso = pesoAleatorio;
+
+    // para o x
+    if(x.listaDevizinhos == NULL){
+        x.listaDevizinhos = novox;
+        x.ultimoVizinho = novox;
+    }
+    else{
+        x.ultimoVizinho->proximoVizinho = novox;
+        x.ultimoVizinho = novox;
+    }
+
+    // para o y
+    if(y.listaDevizinhos == NULL){
+        y.listaDevizinhos = novoy;
+        y.ultimoVizinho = novoy;
+    }
+    else{
+        y.ultimoVizinho->proximoVizinho = novoy;
+        y.ultimoVizinho = novoy;
+
+    }
+
+}
+
+void criarGrafoNaoDirecional(int tamanho, int porcentagem){
+
+    int n1, n2;
+
     for (int i = 0; i < porcentagem; i++)
     {
-        if(matriz[l][c] == 1 || l == c){
+        n1 = gerarNumAleatorio(tamanho);
+        n2 = gerarNumAleatorio(tamanho);
+        
+        if(n1 == n2){
+            i--;
+        }
+        else if(saoVizinhos(grafo[n1],grafo[n2])){
             i--;
         }
         else{
-            matriz[l][c] = 1;
-            matriz[c][l] = 1;
+            registrarVizinhancaGND(grafo[n1],grafo[n2]);
         }
-        l = gerarNumAleatorio(tamanho);
-        c = gerarNumAleatorio(tamanho);
     }
-    
     
 }
 
-void criarGrafoDirecional(int tamanho, int ** matriz, int porcentagem){
-
-    int l = gerarNumAleatorio(tamanho);
-    int c = gerarNumAleatorio(tamanho);
-    for (int i = 0; i < porcentagem; i++)
-    {
-        if(matriz[l][c] == 1 || l == c){
-            i--;
-        }
-        else{
-            matriz[l][c] = 1;
-        }
-        l = gerarNumAleatorio(tamanho);
-        c = gerarNumAleatorio(tamanho);
+void gerarDotGND(int tamanho, string caminho){
+    ofstream arq(caminho);
+    if(!arq.is_open()){
+        cout << "nao aberto" << endl;
     }
+    else{
+        arq << "Graph {" << endl;
+        for (int i = 0; i < tamanho; i++)
+        {
+            arq << i << ";" << endl;
+        }
+        for (int j = 0; j < tamanho; j++)
+        {
+            NoVizinho * percorre = grafo[j].listaDevizinhos;
+            while (percorre != NULL)
+            {
+                if(percorre->PonteiroParavizinho->id < j){
+                    percorre = percorre->proximoVizinho;
+                }
+                else{
+                    arq << j << " -- " << percorre->PonteiroParavizinho->id << " " << "[label=" << percorre->peso << ",weight=" << percorre->peso << "];" << endl;
+                    percorre = percorre->proximoVizinho;
+                }
+            }
+            
+        }
+        arq << "}";
+    }
+
+    arq.close();
 }
 
 void controle(){
     int tamanho = 0; //quantidade de vertices (nos)
     int porcentagem = 0; //quantidade de arestas (ligaçoes)
-    int op = escolhaInicial();
-    if(op == 1 || op == 2){
-        system("cls");
-        cout << "\tInforme o tamanho do grafo: ";
-        cin >> tamanho;
-        cout << "\tInforme a porcentagem do grafo: ";
-        cin >> porcentagem;
-    }
-    switch (op)
-    {
-        case 1:{ // função para grafos nao direcionados
-            int **matriz;
-            matriz = (int **)malloc(tamanho * sizeof(int *));
-            inicializarMatriz(tamanho, matriz);
-            porcentagem = ((tamanho * (tamanho - 1) / 2) * porcentagem) / 100 ;
-            criarGrafoNaoDirecional(tamanho, matriz, porcentagem);
-            imprimirMatriz(tamanho, matriz);
-            gerarDotNaoDirecional(matriz, tamanho);
-        }
-        break;
-        case 2:{ // função para grafos direcionados
-            int **matriz;
-            matriz = (int **)malloc(tamanho * sizeof(int *));
-            inicializarMatriz(tamanho, matriz);
-            porcentagem = ((tamanho * (tamanho - 1)) * porcentagem) / 100 ;
-            criarGrafoDirecional(tamanho, matriz, porcentagem);
-            imprimirMatriz(tamanho, matriz);
-            gerarDotDirecional(matriz, tamanho);
-        }
-        break;
-        case 3:
-            leitura_de_arquivo_dot_direcional();
-            // função para importar .dot
-        break;
-        default:
-        cout << "\topcao invalida!!" << endl;
-        break;
-    }
-}
+    system("cls");
 
-void imprimirMatriz(int tamanho, int **matriz){
-    for (int i = 0; i < tamanho; i++)
-    {
-        for (int j = 0; j < tamanho; j++)
-        {
-            cout << matriz[i][j] << "  ";
-        }
-        cout << endl;
-    }
-}
+    cout << "\tInforme o tamanho do grafo: ";
+    cin >> tamanho;
 
-void gerarDotNaoDirecional(int **matriz, int tamanho){
+    inicializa(tamanho);
 
-    ofstream arquivo("../../grafos/grafo-nao-direcional.dot");
-    if(!arquivo.is_open()){
-        cout << "arquivo nao aberto" << endl;
-    }
-    else{
-        arquivo << "graph {" << endl;
-        for(int n = 0; n < tamanho; n++){
-            arquivo << n << ";" << endl;
-        }
-        for ( int i = 0; i < tamanho - 1; i++)
-        {
-            for (int j = i + 1; j < tamanho; j++)
-            {
-                if(matriz[i][j] == 1){
-                    arquivo << i << " -- " << j << endl;
-                }
-            }
-            
-        }
-    }
-    
-    arquivo << "}";
-    arquivo.close();
-    
-    system("dot -Tpng ../../grafos/grafo-nao-direcional.dot -o ../../grafos/grafo-nao-direcional.png");
-    
-}
+    cout << "\tInforme a porcentagem do grafo: ";
+    cin >> porcentagem;
 
-void gerarDotDirecional(int **matriz, int tamanho){
-    
-    ofstream arq("../../grafos/grafo-direcional.dot");
-    if(!arq.is_open()){
-        cout << "nao abriu" << endl;
-    }
-    else{
-        arq << "digraph {" << endl;
-        for(int n = 0; n < tamanho; n++){
-            arq << n << ";" << endl;
-        }
-        for ( int i = 0; i < tamanho; i++)
-        {
-            for (int j = 0; j < tamanho; j++)
-            {
-                if(matriz[i][j] == 1){
-                    arq << i << " -> " << j << endl;
-                }
-            }
-            
-        }
-    }
-    
-    arq << "}";
-    arq.close();
+    porcentagem = ((tamanho * (tamanho - 1) / 2) * porcentagem) / 100 ;
+    criarGrafoNaoDirecional(tamanho, porcentagem);
 
-    system("dot -Tpng ../../grafos/grafo-direcional.dot -o ../../grafos/grafo-direcional.png");
+    gerarDotGND(tamanho, "../../grafos/grafoNaoDirecionado.dot");
+    system("dot -Tpng ../../grafos/grafoNaoDirecionado.dot -o ../../grafos/grafoNaoDirecionado.png");
+
+    cout << "\tGrafo gerado!" << endl;
+
+    system("cls");
+
+    int inicio, fim = 0;
+    cout << "\tInforme o ponto de inicio: ";
+    cin >> inicio;
+    cout << "\tInforme o ponto de fim: ";
+    cin >> fim;
+
+    controleCaminhoMinimo(tamanho, inicio, fim);
 
 }
 
-void funcaoParaGerarGrafoNaoDirecionalDoArquivo(int ** matriz, int linha, int coluna){
-    
-    matriz[linha][coluna] = 1;
-    matriz[coluna][linha] = 1;
-
-}
-
-void funcaoParaGerarGrafoDirecionalDoArquivo(int ** matriz, int linha, int coluna){
-    
-    matriz[linha][coluna] = 1;
-
-}
-
-void leitura_de_arquivo_dot_direcional(){
-
-    ifstream arq("../../grafos/grafo.dot");
-    if(!arq.is_open()) return;
-    string linha;
-    string tpArq;
-    string teste;
-    string var1;
-    string var2;
-    string var3;
-    int **matriz;
-    
-    getline(arq, linha);
-    
-    istringstream iss(linha);
-    
-    iss >> tpArq;
-    
-    int maior = 0;
-
-
-    do
-    {
-        iss.clear();
-        getline(arq, linha);
-        iss.str(linha);
-        iss >> var1;
-        iss >> var2;//esta aqui apenas para dar erro
-        if(stoi(var1) > maior) maior = stoi(var1);
-    } while (iss.fail());
-    
-    matriz = (int **)malloc((maior + 1) * sizeof(int *));
-    inicializarMatriz(maior + 1, matriz);
-    iss.str(linha); //resetando a linha
-    
-    if(tpArq == "graph"){
-        do
-        {
-            iss >> var1;
-            iss >> var2;
-            iss >> var3;
-            if(!iss.fail()){
-                funcaoParaGerarGrafoNaoDirecionalDoArquivo(matriz, stoi(var1), stoi(var3));
-                getline(arq, linha);
-                iss.clear();
-                iss.str(linha);
-        }
-        } while (!iss.fail());
-
-        if(classificacao_do_grafo(matriz, maior + 1, 0)){
-            cout << "\tgrafo nao direcional e conexo" << endl;
-        }else{
-            cout << "\tgrafo nao direcional e desconexo" << endl;
-        }
-    }
-    else{
-        do
-        {
-            iss >> var1;
-            iss >> var2;
-            iss >> var3;
-            if(!iss.fail()){
-                funcaoParaGerarGrafoDirecionalDoArquivo(matriz, stoi(var1), stoi(var3));
-                getline(arq, linha);
-                iss.clear();
-                iss.str(linha);
-        }
-        } while (!iss.fail());
-        if(classificacao_do_grafo_direcional(matriz, maior + 1)){
-            cout << "grafo direcional e conexo" << endl;
-        }
-        else{
-            cout << "grafo direcional e desconexo" << endl;
-        }
-    }    
-    
-    arq.close(); 
-    
-}
-
-bool classificacao_do_grafo_direcional(int ** matriz, int tamanho){
-
-    bool condicao = true;
+void imprimir(int tamanho){
 
     for (int i = 0; i < tamanho; i++)
     {
-        condicao = classificacao_do_grafo(matriz, tamanho, i);
-        if(!condicao){
-            return false;
+        NoVizinho* atual = grafo[i].listaDevizinhos;
+        cout << "\n";
+        cout << i << ": - ";
+        while (atual != NULL) {
+        cout << atual->PonteiroParavizinho->id << "(" << atual->peso << ")" << " ";
+        atual = atual->proximoVizinho;
         }
     }
+cout << "\n" << endl;
+    
+}
+
+bool classificacaoDoGradoND(int tamanho){
+
+    bool *vetor = new bool[tamanho]();
+
+    percorreGrafo(vetor, 0);
+
+    for (int i = 0; i < tamanho; i++)
+    {
+        if(vetor[i] == 0) return false; 
+    }
+    delete[] vetor; 
     return true;
-
 }
 
-bool classificacao_do_grafo(int ** matriz, int tamanho, int indice){
+bool percorreGrafo(bool * vetor, int indice){
 
-    //funcao usada para classficar grafos nao direcionais
-    // e reaproveitada para grafos direcionais
-
-    bool * vetor = new bool[tamanho]();
-
-    percorreGrafo(matriz, indice, tamanho, vetor);
-
-
-    for (int i = 0; i < tamanho; i++)
-    {
-        if(vetor[i] == 0){
-            return false;
-        }
-    }
-
-    return true;
-
-}
-
-bool percorreGrafo(int ** matriz, int linha, int tamanho, bool * vetor){
-
-    if(vetor[linha] == 1){
+    if(vetor[indice] == 1){
         return true;
     }
 
-    vetor[linha] = 1;
+    vetor[indice] = 1;
 
-    for (int coluna = 0; coluna < tamanho; coluna++)
+    NoVizinho * percorre = grafo[indice].listaDevizinhos;
+
+    while (percorre != NULL)
     {
-        if(matriz[linha][coluna] == 1 && vetor[coluna] == 0){
-            percorreGrafo(matriz, coluna, tamanho, vetor);
-        }
+        percorreGrafo(vetor, percorre->PonteiroParavizinho->id);
+        percorre = percorre->proximoVizinho;
     }
+    
     return true;
 
 }
 
-int main(){
+void atualizaDistancia(int indice, int distanciaAtual){
+    int menor = 900;
+
+    NoVizinho * p = grafo[indice].listaDevizinhos;
+    while (p != NULL)
+    {
+        if(p->peso + distanciaAtual < vetor[p->PonteiroParavizinho->id].distancia){
+
+            vetor[p->PonteiroParavizinho->id].distancia = p->peso + distanciaAtual;
+            if(vetor[p->PonteiroParavizinho->id].distancia < menor){
+                menor = p->PonteiroParavizinho->id;
+            }
+        }
+        p = p->proximoVizinho;
+    }
+    cout << "\to menor e: " << menor << endl;
+    // return menor;
+}
+
+void imprimeVetor(int tamanho){
+    for (int i = 0; i < tamanho; i++)
+    {
+        cout << "\tid: "<< i << " - distancia: " << vetor[i].distancia << endl;
+    }
+}
+
+void controleCaminhoMinimo(int tamanho, int inicio, int chegada){
+    inicializaVetor(tamanho);
+    vetor[inicio].distancia = 0;
+    // int menor;
+    // while (menor != chegada)
+    // {
+        
+    // }
+    
+    atualizaDistancia(inicio, 0);
+    // imprimeVetor(tamanho);
+}
+
+main(){
     srand(time(NULL));
+    
     controle();
-    // system("dot -Tpng ../../grafos/grafo.dot -o ../../grafos/temqueserdesconexo.png");
+
+    // cout << "rodou" << endl;
+
+    // system("dot -Tpng ../../grafos/grafoNaoDirecionado.dot -o ../../grafos/grafoNaoDirecionado.png");
+
     return 0;
 }

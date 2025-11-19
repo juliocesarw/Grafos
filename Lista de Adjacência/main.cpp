@@ -434,7 +434,7 @@ main(){
     controle();
 
     // esta comentado por que eu nao consegui resover o erro de permissao para fazer isso dentro da funcao
-    // system("dot -Tpng ../../grafos/grafoDirecionado.dot -o ../../grafos/grafoDirecionado.png");
+    system("dot -Tpng ../../grafos/grafoNaoDirecionado.dot -o ../../grafos/grafoNaoDirecionado.png");
 
     return 0;
 }
