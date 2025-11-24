@@ -8,6 +8,7 @@ using namespace std;
 #include <fstream>
 #include <sstream>
 
+
 struct Vertice; 
 
 struct NoVizinho {
@@ -185,7 +186,7 @@ void gerarDotGND(int tamanho, string caminho){
                     percorre = percorre->proximoVizinho;
                 }
                 else{
-                    arq << j << " -- " << percorre->PonteiroParavizinho->id << " " << "[label=" << percorre->peso << ",weight=" << percorre->peso << "];" << endl;
+                    arq << j << " -- " << percorre->PonteiroParavizinho->id << " " << "[label=" << percorre->peso << ",weight=" << percorre->peso << ", fontcolor=blue];" << endl;
                     percorre = percorre->proximoVizinho;
                 }
             }
@@ -214,19 +215,25 @@ void controle(){
     criarGrafoNaoDirecional(tamanho, porcentagem);
 
     gerarDotGND(tamanho, "../../grafos/grafoNaoDirecionado.dot");
-    system("dot -Tpng ../../grafos/grafoNaoDirecionado.dot -o ../../grafos/grafoNaoDirecionado.png");
+    // system("dot -Tpng ../../grafos/grafoNaoDirecionado.dot -o ../../grafos/grafoNaoDirecionado.png");
+    system("sfdp -Tpng -Gdpi=300 ../../grafos/grafoNaoDirecionado.dot -o ../../grafos/grafoNaoDirecionado.png");
+    // system("dot -Tpng -Gsize=6.8,3.8\! -Gdpi=300 ../../grafos/grafoNaoDirecionado.dot -o ../../grafos/grafoNaoDirecionado.png");
 
     cout << "\tGrafo gerado!" << endl;
 
     system("cls");
 
     int inicio, fim = 0;
-    cout << "\tInforme o ponto de inicio: ";
-    cin >> inicio;
-    cout << "\tInforme o ponto de fim: ";
-    cin >> fim;
 
-    controleCaminhoMinimo(tamanho, inicio, fim);
+    while (inicio >= 0)
+    {
+        cout << "\tInforme o ponto de inicio: ";
+        cin >> inicio;
+        cout << "\tInforme o ponto de fim: ";
+        cin >> fim;
+
+        controleCaminhoMinimo(tamanho, inicio, fim);
+    }
 
 }
 
@@ -280,7 +287,9 @@ bool percorreGrafo(bool * vetor, int indice){
 
 }
 
-void atualizaDistancia(int indice, int distanciaAtual){
+bool atualizaDistancia(int indice, int distanciaAtual, int pontoDeChegada){
+    if(indice == pontoDeChegada) return false;
+    vetor[indice].visitado = true;
     int menor = 900;
 
     NoVizinho * p = grafo[indice].listaDevizinhos;
@@ -289,34 +298,107 @@ void atualizaDistancia(int indice, int distanciaAtual){
         if(p->peso + distanciaAtual < vetor[p->PonteiroParavizinho->id].distancia){
 
             vetor[p->PonteiroParavizinho->id].distancia = p->peso + distanciaAtual;
+            vetor[p->PonteiroParavizinho->id].predecessor = indice;
             if(vetor[p->PonteiroParavizinho->id].distancia < menor){
                 menor = p->PonteiroParavizinho->id;
             }
         }
         p = p->proximoVizinho;
     }
-    cout << "\to menor e: " << menor << endl;
-    // return menor;
+
+    return true;
 }
 
 void imprimeVetor(int tamanho){
     for (int i = 0; i < tamanho; i++)
     {
-        cout << "\tid: "<< i << " - distancia: " << vetor[i].distancia << endl;
+        cout << "\tid: "<< i << " - distancia: " << vetor[i].distancia << "\t\t predecessor: " << vetor[i].predecessor << endl;
     }
+}
+
+int retornaMenor(int tamanho){
+    int indiceMenor = 200;
+    int menorDistancia = 200;
+    
+    for (int i = 0; i < tamanho; i++)
+    {
+        if(vetor[i].distancia < menorDistancia && vetor[i].visitado == false){
+            indiceMenor = i;
+            menorDistancia = vetor[i].distancia;
+        }
+    }
+    cout << "o menor e: " << indiceMenor << endl;   
+    return indiceMenor;
+}
+
+void imprimeCaminho(int saida, int chegada){
+
+    int predecessor = chegada;
+    while (predecessor >= 0)
+    {
+        if(predecessor != saida){
+            cout << predecessor << " <- ";
+        }else{
+            cout << predecessor << endl;
+            
+        }
+        predecessor = vetor[predecessor].predecessor;
+    }
+    cout << "DISTANCIA: " << vetor[chegada].distancia << endl;
+}
+
+void gerarDotDoCaminho(int inicio, int chegada, int tamanho){
+
+ofstream arq("../../grafos/caminhoMinimo.dot");
+    if(!arq.is_open()){
+        cout << "nao aberto" << endl;
+    }
+    else{
+        arq << "Graph {" << endl;
+        for (int i = 0; i < tamanho; i++)
+        {
+            arq << i << ";" << endl;
+        }
+        for (int j = 0; j < tamanho; j++)
+        {
+            NoVizinho * percorre = grafo[j].listaDevizinhos;
+            while (percorre != NULL)
+            {
+                if(percorre->PonteiroParavizinho->id < j){
+                    percorre = percorre->proximoVizinho;
+                }
+                else{
+                    arq << j << " -- " << percorre->PonteiroParavizinho->id << " " << "[label=" << percorre->peso << ",weight=" << percorre->peso << ", fontcolor=blue];" << endl;
+                    percorre = percorre->proximoVizinho;
+                }
+            }
+            
+        }
+        arq << "}";
+    }
+
+    arq.close();
+
 }
 
 void controleCaminhoMinimo(int tamanho, int inicio, int chegada){
     inicializaVetor(tamanho);
-    vetor[inicio].distancia = 0;
-    // int menor;
-    // while (menor != chegada)
-    // {
-        
-    // }
+    int inicioIteracao = inicio;
+    vetor[inicioIteracao].distancia = 0;
+    vetor[inicioIteracao].predecessor = -1; 
+    while (atualizaDistancia(inicioIteracao, vetor[inicioIteracao].distancia, chegada))
+    {
+        // system("cls");
+        inicioIteracao = retornaMenor(tamanho);
+        // imprimeVetor(tamanho);
+        // system("pause");
+    }
     
-    atualizaDistancia(inicio, 0);
-    // imprimeVetor(tamanho);
+    system("cls");
+    imprimeCaminho(inicio, chegada);
+    gerarDotDoCaminho(inicio, chegada, tamanho);
+    system("pause");
+    
 }
 
 main(){
