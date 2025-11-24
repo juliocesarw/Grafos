@@ -27,6 +27,7 @@ struct No {// no para fazer o caminho minimo
     int distancia;
     int predecessor;
     bool visitado;
+    bool estaNoCaminho; // para gerar o dot
 };
 
 Vertice *grafo;
@@ -49,6 +50,7 @@ void inicializaVetor(int tamanho){
         vetor[i].predecessor = -2;
         vetor[i].distancia = 200000;
         vetor[i].visitado = false;
+        vetor[i].estaNoCaminho = false; 
     }
 
 }
@@ -332,13 +334,15 @@ int retornaMenor(int tamanho){
 }
 
 void imprimeCaminho(int saida, int chegada){
-
+    int contador = 1;
     int predecessor = chegada;
     while (predecessor >= 0)
     {
         if(predecessor != saida){
+            vetor[predecessor].estaNoCaminho = true;
             cout << predecessor << " <- ";
         }else{
+            vetor[predecessor].estaNoCaminho = true;
             cout << predecessor << endl;
             
         }
@@ -348,8 +352,7 @@ void imprimeCaminho(int saida, int chegada){
 }
 
 void gerarDotDoCaminho(int inicio, int chegada, int tamanho){
-
-ofstream arq("../../grafos/caminhoMinimo.dot");
+    ofstream arq("../../grafos/caminhoMinimo.dot");
     if(!arq.is_open()){
         cout << "nao aberto" << endl;
     }
@@ -357,7 +360,11 @@ ofstream arq("../../grafos/caminhoMinimo.dot");
         arq << "Graph {" << endl;
         for (int i = 0; i < tamanho; i++)
         {
-            arq << i << ";" << endl;
+            if(vetor[i].estaNoCaminho){
+                arq << i << " [color=red];" << endl;
+            }else{
+                arq << i << ";" << endl;
+            }
         }
         for (int j = 0; j < tamanho; j++)
         {
@@ -368,7 +375,20 @@ ofstream arq("../../grafos/caminhoMinimo.dot");
                     percorre = percorre->proximoVizinho;
                 }
                 else{
-                    arq << j << " -- " << percorre->PonteiroParavizinho->id << " " << "[label=" << percorre->peso << ",weight=" << percorre->peso << ", fontcolor=blue];" << endl;
+                    if(vetor[j].estaNoCaminho && vetor[percorre->PonteiroParavizinho->id].estaNoCaminho){
+                        if(vetor[chegada].predecessor == inicio){
+                            arq << j << " -- " << percorre->PonteiroParavizinho->id << " " << "[label=" << percorre->peso << ",weight=" << percorre->peso << ", fontcolor=blue color=red];" << endl;
+                        }
+                        else if((j == inicio && percorre->PonteiroParavizinho->id == chegada) ||( j == chegada && percorre->PonteiroParavizinho->id == inicio)){
+                            arq << j << " -- " << percorre->PonteiroParavizinho->id << " " << "[label=" << percorre->peso << ",weight=" << percorre->peso << ", fontcolor=blue];" << endl;
+                        }
+                        else{
+                            arq << j << " -- " << percorre->PonteiroParavizinho->id << " " << "[label=" << percorre->peso << ",weight=" << percorre->peso << ", fontcolor=blue color=red];" << endl;
+                        }
+                    }
+                    else{
+                        arq << j << " -- " << percorre->PonteiroParavizinho->id << " " << "[label=" << percorre->peso << ",weight=" << percorre->peso << ", fontcolor=blue];" << endl;
+                    }
                     percorre = percorre->proximoVizinho;
                 }
             }
@@ -376,9 +396,8 @@ ofstream arq("../../grafos/caminhoMinimo.dot");
         }
         arq << "}";
     }
-
     arq.close();
-
+    system("sfdp -Tpng -Gdpi=300 ../../grafos/caminhoMinimo.dot -o ../../grafos/caminhoMinimo.png");
 }
 
 void controleCaminhoMinimo(int tamanho, int inicio, int chegada){

@@ -1,17 +1,17 @@
 Graph {
-0;
+0 [color=red];
 1;
-2;
+2 [color=red];
 3;
 4;
 5;
-6;
+6 [color=red];
 7;
 8;
 9;
 0 -- 9 [label=2,weight=2, fontcolor=blue];
-0 -- 6 [label=6,weight=6, fontcolor=blue];
-0 -- 2 [label=6,weight=6, fontcolor=blue];
+0 -- 6 [label=6,weight=6, fontcolor=blue color=red];
+0 -- 2 [label=6,weight=6, fontcolor=blue color=red];
 0 -- 7 [label=4,weight=4, fontcolor=blue];
 1 -- 4 [label=3,weight=3, fontcolor=blue];
 1 -- 2 [label=9,weight=9, fontcolor=blue];
